@@ -38,7 +38,20 @@ float pre_pos2=0,pos2=0; //motor2
 float w1=0,w2=0; //van toc goc hien tai cua motor 1 và 2
 float pre_pwm1 = 0;
 float pre_pwm2 = 0;   	
-char str[10] = "hello";
+char str[2] ;
+char strn[10] = "da nhan";
+float vR= 300; //van toc dai mong muon (mm/s)
+float wR;//van toc goc mong muon (rad/s)
+
+//calculate value
+float pre_e2=0,e2=0; //sai so e2
+float inte2=0; //khau tich phan
+float vleft=0,vright=0,wleft=0,wright=0; //van toc banh trai va banh phai
+float v=0,w=0; //van toc dai va van toc goc
+float b=186.5; //khoang cach tam 2 banh (mm)
+float D=67; //duong kinh banh xe (mm)
+float L=48.65; //khoang cach tu truc dong co den mat cam bien
+float pwm1 = 0, pwm2 = 0; //
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -366,12 +379,12 @@ float tocdoquay(float pre_pos,float pos)
 	float w;		
 	if (pre_pos > pos) 
 	{
-		w = (pre_pos - pos)*6000/44/45;
+		w = (pre_pos - pos)*600/44/45;
 	}
 	else if (pre_pos == pos) w = 0;
 	else if (pos > pre_pos) 
 	{
-		w = (65535 - pos + pre_pos )*6000/44/45; //1.15*3.03
+		w = (65535 - pos + pre_pos )*600/44/45; //1.15*3.03
 	}
 	// if(w>130) w=130;
   return w;
@@ -380,7 +393,48 @@ float tocdoquay(float pre_pos,float pos)
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void dithang(void)
+{
+	HAL_GPIO_WritePin(L1_GPIO_Port,L1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(L2_GPIO_Port,L2_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R1_GPIO_Port,R1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R2_GPIO_Port,R2_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(STBY_GPIO_Port,STBY_Pin,GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,500); //left
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,500);
+}
+void dilui(void)
+{
+	HAL_GPIO_WritePin(L1_GPIO_Port,L1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(L2_GPIO_Port,L2_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R1_GPIO_Port,R1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R2_GPIO_Port,R2_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(STBY_GPIO_Port,STBY_Pin,GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,500); //left
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,500);
+}
 
+void retrai(void)
+{
+	HAL_GPIO_WritePin(L1_GPIO_Port,L1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(L2_GPIO_Port,L2_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R1_GPIO_Port,R1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R2_GPIO_Port,R2_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(STBY_GPIO_Port,STBY_Pin,GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,600); //left
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,300);
+}
+
+void rephai(void)
+{
+	HAL_GPIO_WritePin(L1_GPIO_Port,L1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(L2_GPIO_Port,L2_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R1_GPIO_Port,R1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R2_GPIO_Port,R2_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(STBY_GPIO_Port,STBY_Pin,GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,300); //left
+	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,600);
+}
 /* USER CODE END 0 */
 
 /**
@@ -388,7 +442,7 @@ float tocdoquay(float pre_pos,float pos)
   * @retval int
   */
 int main(void)
-{
+  {
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -433,6 +487,13 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
 	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_4);
 	
+	HAL_GPIO_WritePin(L1_GPIO_Port,L1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(L2_GPIO_Port,L2_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R1_GPIO_Port,R1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(R2_GPIO_Port,R2_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(STBY_GPIO_Port,STBY_Pin,GPIO_PIN_SET);
+//			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,1000); //left
+//		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -443,32 +504,92 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 //		HCS04_trig(Trig_T3_CH1_GPIO_Port,Trig_T3_CH1_Pin,3,1);
-//		HAL_Delay(100);  
+////		HAL_Delay(100);  
 //		HCS04_trig(Trig_T3_CH2_GPIO_Port,Trig_T3_CH2_Pin,3,2);
-//		HAL_Delay(100);
+////		HAL_Delay(100);
+//		HCS04_trig(Trig_T3_CH3_GPIO_Port,Trig_T3_CH3_Pin,3,3);
+////		HAL_Delay(100);
 //		HCS04_trig(Trig_T3_CH4_GPIO_Port,Trig_T3_CH4_Pin,3,4);
-//		HAL_Delay(100);
+////		HAL_Delay(100);
 //		HCS04_trig(Trig_T4_CH2_GPIO_Port,Trig_T4_CH2_Pin,4,2);
-//		HAL_Delay(100);
+////		HAL_Delay(100);
 //		HCS04_trig(Trig_T4_CH3_GPIO_Port,Trig_T4_CH3_Pin,4,3);
 //		HAL_Delay(100);
 //		pre_pos1=pos1;
 //		pre_pos2=pos2;	
-		HAL_Delay(100);
+//		HAL_Delay(100);
 //		pos1=__HAL_TIM_GetCounter(&htim1);
 //		pos2=__HAL_TIM_GetCounter(&htim8);	
+//	//		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,600); //left
+//	//	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,300);	
 //		w1= tocdoquay(pre_pos1,pos1);
 //		w2= tocdoquay(pre_pos2,pos2); 
-//		HCS04_trig(Trig_T3_CH2_GPIO_Port,Trig_T3_CH2_Pin,8,3);
-		//HAL_Delay(100);
-//		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,500); //left
-//		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,500);
-		HAL_UART_Transmit_IT (&huart2,a, sizeof(a));
+		HAL_UART_Receive_DMA(&huart2,(uint8_t *)str, sizeof(str));
+//		if(str[0] == 'F')
+//		{
+//			dithang();
+//		}
+//		else if(str[0] == 'R')
+//		{
+//			rephai();
+//		}
+//		else if(str[0] == 'L')
+//		{
+//			retrai();
+//		}
+//		else if(str[0] == 'G')
+//		{
+//			dilui();
+//		}
+//		else 
+//		{
+//			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,0); //left
+//			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,0);
+//		}
+			w = str[0];
+			vR = str[1];
+			vleft = 0.5*(2*vR - w*b);
+			vright = 0.5*(2*vR + w*b);
+			wleft=(vleft*60*2/D)/(2*3.14);
+			wright=(vright*60*2/D)/(2*3.14);
+			pwm1 = wleft * 1000/130; 
+			pwm2 = wright*1000/130;
+			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,pwm1); //left
+			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,pwm2);
+//		HAL_Delay(100);
+//		str[0] = 'S';
+//		HAL_UART_Transmit_IT(&huart2,(uint8_t *)strn,sizeof(strn));
+//		HAL_Delay(100);
 		//HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }
 
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	if(str[0] == 'F')
+//		{
+//			dithang();
+//		}
+//		else if(str[0] == 'R')
+//		{
+//			rephai();
+//		}
+//		else if(str[0] == 'L')
+//		{
+//			retrai();
+//		}
+//		else if(str[0] == 'G')
+//		{
+//			dilui();
+//		}
+//		else 
+//		{
+//			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_3,0); //left
+//			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_4,0);
+//		}
+
+//}
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -844,25 +965,31 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, Trig_T3_CH3_Pin|Trig_T3_CH4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, Trig_T3_CH1_Pin|Trig_T3_CH2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Trig_T3_CH4_GPIO_Port, Trig_T3_CH4_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, R2_Pin|R1_Pin|STBY_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Trig_T8_CH3_Pin|L1_Pin|Trig_T4_CH2_Pin|L2_Pin
-                          |Trig_T4_CH3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, Trig_T4_CH2_Pin|L1_Pin|L2_Pin|Trig_T4_CH3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : Trig_T3_CH3_Pin Trig_T3_CH4_Pin */
+  GPIO_InitStruct.Pin = Trig_T3_CH3_Pin|Trig_T3_CH4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Trig_T3_CH1_Pin Trig_T3_CH2_Pin */
   GPIO_InitStruct.Pin = Trig_T3_CH1_Pin|Trig_T3_CH2_Pin;
@@ -871,13 +998,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Trig_T3_CH4_Pin */
-  GPIO_InitStruct.Pin = Trig_T3_CH4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Trig_T3_CH4_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : R2_Pin R1_Pin STBY_Pin */
   GPIO_InitStruct.Pin = R2_Pin|R1_Pin|STBY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -885,10 +1005,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Trig_T8_CH3_Pin L1_Pin Trig_T4_CH2_Pin L2_Pin
-                           Trig_T4_CH3_Pin */
-  GPIO_InitStruct.Pin = Trig_T8_CH3_Pin|L1_Pin|Trig_T4_CH2_Pin|L2_Pin
-                          |Trig_T4_CH3_Pin;
+  /*Configure GPIO pins : Trig_T4_CH2_Pin L1_Pin L2_Pin Trig_T4_CH3_Pin */
+  GPIO_InitStruct.Pin = Trig_T4_CH2_Pin|L1_Pin|L2_Pin|Trig_T4_CH3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
